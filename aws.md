@@ -1,15 +1,18 @@
 ---
 layout: default
 ---
-[Home](./README.md).
-[Internet](./internet.md).
-[Cloud Computing](./cloud_computing.md).
-[Serverless](./serverless.md).
-[AWS](./aws.md).
+[Home](./README.md) | 
+[Internet](./internet.md) | 
+[AWS](./aws.md) | 
+[Serverless](./serverless.md) | 
+[Optional - Big Data History](./big_data_history.md) | 
+[Spark Overview](./apachespark.md) | 
+[Spark DataFrame API, SQL and Internals](spark-continued.md) |
+<!--
 [Spark Overview](./spark_overview.md).
 [Spark DataFrame & SQL API](./sparkAPI.md).
 [Spark Internals](./spark_internals.md).
-[Advanced Optimizations in Spark](spark_optimizations.md).
+-->
 [Help/Resources](./resources.md).
 
 ## Using AWS programatically
@@ -73,6 +76,7 @@ layout: default
     + [Step 9. Reviewing launch status](#step-9-reviewing-launch-status)
     + [Step 10. Examining a new Instance in the EC2 Console](#step-10-examining-a-new-instance-in-the-ec2-console)
     + [Step 11. Logging into an instance](#step-11-logging-into-an-instance)
+    + [Step 12. NGINX](#step-12-install-nginx)
   * [Trouble-shooting and advanced topics](#trouble-shooting-and-advanced-topics)
     + [I cannot log into my EC2 instance, what might have gone wrong?](#i-cannot-log-into-my-ec2-instance-what-might-have-gone-wrong)
   * [How do storage volumes appear within a Linux instance on Amazon EC2?](#how-do-storage-volumes-appear-within-a-linux-instance-on-amazon-ec2)
@@ -89,13 +93,13 @@ layout: default
 ## Part 1. Preamble, Regions, Availability Zones (AZ), Edge Locations
 
 #### Preamble
-Cloud computing allows users to quickly access an arbitrary amount of compute resources from a distance without the need to buy or maintain hardware themselves. There are many cloud computing services. This note describes the use of the Amazon Web Services ([AWS](http://aws.amazon.com/)) and its resources. However, the fundamental concepts covered here will generally apply to other cloud computing services such as [Google Cloud](https://cloud.google.com/), [Digital Ocean](https://www.digitalocean.com/), [Microsoft Azure](https://azure.microsoft.com/), [etc.](http://cloud-computing.softwareinsider.com/), though with substantial differences in jargon used by each provider.
+Cloud computing allows users to quickly access an arbitrary amount of compute resources from a distance without the need to buy or maintain hardware themselves. There are many cloud computing services. This note describes the use of the Amazon Web Services ([AWS](http://aws.amazon.com/)) and its resources. However, the fundamental concepts covered here will generally apply to other cloud computing services such as [Google Cloud](https://cloud.google.com/) and [Microsoft Azure](https://azure.microsoft.com/), though with substantial differences in jargon used by each provider.
 
 #### Glossary and abbreviations
 - [AWS](http://aws.amazon.com/) - Amazon Web Services. A collection of cloud computing services provided by Amazon. 
 - [EC2](http://aws.amazon.com/ec2/) - Elastic Compute. A particular AWS service that provides 'resizable cloud hosting services'. This service allows you to configure and rent computers to meet you compute needs on an as needed basis.
 - [EBS](http://aws.amazon.com/ebs/) - Elastic Block Storage. A data storage solution offered through the EC2 service. This service allows you to rent disk storage and associate that storage with your compute resources. EBS volumes are generally backed by SSD devices. EBS volumes can only be directly attached to a single EC2 instance at a time.
-- [S3](http://aws.amazon.com/s3/) - Simple storage service. A storage service that is cheaper than EBS and allows for storage of larger amounts of data with some drawbacks [compared to EBS](http://www.tomsitpro.com/articles/cost-of-the-cloud-book,2-694-2.html). S3 volumes store data as objects that are accessed by an API or command line interface or other application designed to work with S3. EBS volumes on the other hand can be mounted as if they were a local disk drive associated with the Instance..
+- [S3](http://aws.amazon.com/s3/) - Simple storage service. A storage service that is cheaper than EBS and allows for storage of larger amounts of data with some drawbacks [compared to EBS TODO](http://www.tomsitpro.com/articles/cost-of-the-cloud-book,2-694-2.html). S3 volumes store data as objects that are accessed by an API or command line interface or other application designed to work with S3. EBS volumes on the other hand can be mounted (directly connected to an EC2 instance) as if they were a local disk drive associated with the Instance..
 - [SSD](http://en.wikipedia.org/wiki/Solid-state_drive) - Solid state drive. A particular type of storage hardware that is generally faster and more expensive than traditional hard drives.
 - [HDD](http://en.wikipedia.org/wiki/Hard_disk_drive) - Hard disk drive. A particular type of storage hardware that is generally cheaper and larger but slower than SSD. HDD drives are traditional hard drives that access data on a spinning magnetic disk.
 - [Ephemeral storage](http://stackoverflow.com/questions/11566223/what-data-is-stored-in-ephemeral-storage-of-amazon-ec2-instance) - Also known as Instance Store storage. Data storage associated with an EC2 instance that is local to the host computer. This storage *does not persist* when the instance is stopped or terminated. In other words, anything you store in this way will be lost if the system is stopped or terminated. Instance store volumes may be backed by SSD or HDD devices.
@@ -159,156 +163,80 @@ Cloud computing allows users to quickly access an arbitrary amount of compute re
 
 ### Edge Locations
 
-- **AWS Edge Locations** are locations around the world meant for caching content, enhancing the user experience, reducing latency. Edge locations are specifically used by AWS Cloudfront and AWS CDN. Every Region is has its own set Availability Zone's and Edge Locations.
+- **AWS Edge Locations** are locations [around the world](https://aws.amazon.com/about-aws/whats-new/2019/10/cloudfront-south-america-200-edge-location/) meant for caching content, enhancing the user experience, reducing latency. Edge locations are specifically used by two AWS Services, AWS Cloudfront and AWS CDN. For example, if you use Amazon's services for hosting a website, your website's images can be copied to multiple locations to make sure every request to that image is fulfilled from a server that is geographically close to you. Every Region is has its own set Availability Zone's and Edge Locations. Edge locations can be located in a country that isn't listed as an availability zone (think about this as an independent data center).
 
 ## Part 1. AWS Services Overview
 
+Here is a list of some of the more important AWS services for your reference. We only cover a few of them in the class.
+
 **Compute:**
 -    `EC2` - Elastic Compute Cloud
--    `EC2 Container Services` - Containerization Docker
--    `Elastic Beanstalk` - Plug and Play - for developers
+-    `EC2 Container Services` - Containerization Docker 
+-    `Elastic Beanstalk` - Plug and Play Web application deployment - for developers
 -    `Lambda (server less)` - Code/Functions uploaded to the cloud to run at different points
--    `Lightsail` - Plug and Play
--    `Batch` - Batch computing in the cloud
 
 **Storage:**
 -    `S3` - Simple Storage Service - object based storage - buckets
 -    `EFS` - Elastic File System
 -    `Glacier` - Data Archival 
--    `Snowball` - Large amounts of data to aws data center
--    `Storage gateway` - VM installed in datacenter or office - replicate info to S3
+-    `Snowball` - Physically move large amounts of data to aws data center
 
 **Databases:**
 -    `RDS` - Relation Database Service - postgres, mysql, oracle
 -    `DynamoDB` - Non-Relational DB
--    `Elasticache` - Cache Things from DB
+-    `Elasticache` - Fully in-memory database
 -    `Redshift` - Data Warehousing Business Intelligence, complex queries
     
-**Migration:**
--    `AWS Migration Hub` - tracking service for moving to aws
--    `Application Discover Service` - track applications and dependency
--    `Database Migration Service` - migrate db from on premise to AWS
--    `Server Migration Service` - migrate server to AWS cloud
--    `Snowball` - in between storage and migration
-
 **Networking and Content Delivery:**
 -    `VPC (highlight)` - Amazon virtual private cloud - virtual datacenter - configure avail zones, firewall, network acl etc.
 -    `Cloudfront` - AWS content delivery network, store assets specific regions around the world
 -    `Route 53` - AWS DNS service - lookup ip to get ipv4 and ipv6 address
--    `API Gateway` - Serverless way of creating own api
--    `Direct Connect` - Dedicated line from office directly into amazon, connects to VPC
-
-**Developer Tools:**
--    `Codestart` - project management, CI toolchain, collaborate
--    `Codecommit` - store code, like github    
--    `Codebuild` - compile and run tests, produce package
--    `Code deploy` - deployment service to ec2 instance
--    `Codepipeline` - automate and visualize steps to release software
--    `X-ray` - debug and analyze server less application
--    `Cloud9` - IDE environment in browser
-
-**Management tools:**
--    `Cloudwatch` - Monitoring service
--    `Cloudformation` - solutions architect specific - scripting infrastructure - turn infrastructure to code
--    `Cloudtrail` - log changes to aws environment
--    `Config` - monitors config of aws environment
--    `Opswork` - similar to elastic beanstalk - chef and puppet to automate environments
--    `Service Catalog` - manage a catalog of IT services
--    `Systems manager` - interface for managing aws resources - group resources
--    `Trusted Advisor` - advice around security, advice for aws services and resources, accountant like
--    `Managed Services` - manage service for aws cloud
-
-**Media Services:**
--    `Elastic transcoder` - takes media and resizes on different devices
--    `Media convert` - file based video transcoding with broadcast grade features
--    `Media live` - broadcast grade live video processing service. tv internet connected multiscreen
--    `Media Package` - protect content over internet 
--    `Media Store` - media storage, optimized for media
--    `Media Tailor` - target advertising into video streams with out harming broadcast
 
 **Machine Learning:**
--    `Sage maker` - easy for deep learning when coding for environment
--    `Comprehend` - sentiment analysis on products. good or bad?
--    `Deep lens` - computer vision on camera, recognition, physical piece of hardware
--    `Lex` - powers alexa, AI 
--    `Machine Learning` - throw dataset to AWS cloud and predict outcome
--    `Polly` - text to speech, voices sound real, accents
--    `Rekognition` - upload file, tells you what is in the file
--    `Amazon translate` - translate to other langs
--    `Amazon transcribe` - hard of hearing, speech recognition, speech to text
+-    `Sage maker` - Managed notebook environment
+-    `Comprehend` - Sentiment analysis
+-    `Deep lens` - Computer vision on camera, a physical piece of hardware
+-    `Lex` - Chatbot engine. This powers Alexa 
+-    `Polly` - text to speech, voices sound real
+-    `Rekognition` - Image processing
+-    `Amazon translate` - Translate to other languages
+-    `Amazon transcribe` - Speech recognition
 
 **Analytics:**
 -    `Athena` - SQL queries ins S3 buckets, serverless
 -    `EMR` - elastic map reduce - processing large amounts of data, chops data up for analysis
--    `Cloudsearch` - search service
--    `Elastic Search service` - search service
 -    `Kinesis` - solutions architect highlight, ingesting large amounts data
 -    `Kinesis Video streams` - ingesting streams and analyze    
 -    `Quicksight` - business intelligence tool
--    `Datapipeline` - moving data between different services
--    `Glue` - ETL (extract transform load)
+-    `Glue` - ETL tool (extract transform load)
 
 **Security Identity and Compliance:**
 -    `IAM` - identity access management
--    `Cognito` - device authentication, oath, after authenticated, use aws services
--    `Guard Duty` - monitor for malicious activity
--    `Inspector` - install on vm or instances, test against it, schedule
--    `Macie` - Scan s3 buckets and looks for sensitive info and alert
--    `Certificate Manager` - ssl cert for free, manage ssl cert
--    `Cloud HSM` - cloud hardware security module - dedicate bits of hardware to store keys to authenticated
--    `Directory Service` - integration ms active service to aws services
--    `WAF` - web application firewall - at application layer to stop attacks, XSS, sql injection
--    `Shield` - by default for cloud front - ddos mitigation, prevent ddos attacks
--    `Artifact` - portal to download aws client reports, manage agreements 
-
-**Mobile Services:**
--    `Mobile hub` - management console for mobile app for aws services
--    `AWS Pinpoint` - targeted push notifications
--    `AWS Appsync` - atomically updates data in web or mobile in real time
--    `Device Farm` - test apps on real device, iOS, android
--    `Mobile Analytics` - analytics service for mobile
 
 **AR/VR:**
 -    `Sumerian` - tools to create environment, super new
 
 **Application Integration:**
--    `Step functions` - manage lambda functions and ways to go through it
--    `Amazon MQ` - message queue
--    `SNS` - notification services
--    `SQS` - decouple infrastructure, queue
--    `SWF` - workflow job creation
+-    `SNS` - Notification services
 
 **Customer Engagement:**
--    `Connect` - contact center as a service, call center
--    `Simple Email Service` - email service, send grid, mailchimp
+-    `Simple Email Service` - send emails through Amazon's email service
 
-**Business Productivity:**
--    `Alexa for business` - manager for business needs
--    `Amazon chime` - google hangouts like
--    `Work Docs` - dropbox for AWS
--    `Work Mail` - Office 365 like
-   
-**Desktop and App streaming:**
--    `Workspaces` - VDI solution, run OS in aws cloud
--    `App stream 2.0` - streaming application to desktop of device
-    
 **IOT:**
 -    `iOT` - devices sending sensor information
 -    `iOT Device Management` - device management
 -    `Amazon FreeRTOS` - OS for microcontrollers
--    `Greengrass` - ?? 
-
-**Game Development:**
--    `Gamelift` - service to develop games
 
 * * *
 
-## What Services Will Be Tested On The Exam?
-- `S3`
-- `Glacier`
+## What Services Are you expected to know?
 - `EC2`
-- `EBS`
-
+- `S3`, `Glacier`, `EBS`
+- `Transcribe`
+- `Translate`
+- `Comprehend`
+- `Rekognition`
+- `Polly`
 
 * * *
 
@@ -340,7 +268,6 @@ Cloud computing allows users to quickly access an arbitrary amount of compute re
 
 ### S3 Guarantees:
 - Built for 99.99% availability for the S3 platform
-- 99.0 % availability for Amazon Guarantee
 - Amazon guarantees 99.999999999% durability for S3 information (Tip: 11 9s!)
 
 ### S3 Features Overview:
@@ -348,7 +275,6 @@ Cloud computing allows users to quickly access an arbitrary amount of compute re
 - Lifecycle Management 
 - Versioning
 - Encryption
-- MFA Delete
 - Secure your Data using Access Control Lists and Bucket Policy
 
 
@@ -369,10 +295,9 @@ Cloud computing allows users to quickly access an arbitrary amount of compute re
 - Requests
 - Storage Management Pricing
 - Data Transfer Pricing
-- Transfer Acceleration: fast, easy, secure transfer of files over long distances between end-users and an S3 bucket. Takes advantage of CloudFront's globally distributed edge locations. As the data arrives at an edge location, data is routed to Amazon S3 over an optimized network path
-- Cross Region Replication Pricing: When you upload an object to US_EAST 1 and cross region replication is turned on, the object will be replicated automatically to your bucket in Sydnie. 
+- Transfer Acceleration: fast, easy, secure transfer of files over long distances between end-users and an S3 bucket. 
+- Cross Region Replication Pricing: I.e. When you upload an object to `us-east-1` and cross region replication is turned on, the object will be replicated automatically to your bucket in Sydney. 
 - S3 is not suitable to install an operating system / database on, because it is object based storage.
-You can turn on MFA Delete - to delete files they need MFA.
 
 ### S3 Security and Encryption
 - By default all newly created buckets are private. 
@@ -383,73 +308,17 @@ You can turn on MFA Delete - to delete files they need MFA.
 
 ### Encryption in Transit is achieved by:
 - https -> secured
-- Always achieved by SSL/TLS
+- Always achieved by using RSA
 - Encrypt at Rest (source side) is achieved by:
-  - S3 Management Keys - SSE-SB
   - AWS Key Management Service, Managed Keys - SSE-KMS
-  - Server Side Encryption with Customer Provided Keys - SSE-C
-- Client Side Encryption
-- S3 Version Control - Great back-up tool
-
+ 
 ### S3 Version Control - Great back-up tool
 Using Versioning with S3:
 - Stores all versions of an object (including all writes and deletes of an object)
-- Great backup tool
 - Once enabled, versioning cannot be disabled, only suspended
 - Integrates with Lifecycle Rules
-- Versioning's MFA Delete capability, which uses multi-factor authentication can provide additional layer of security.
-  - Note: Uploading the same file again (different version) will reset it to private
-- Lifecycle Management and Glacier
-- Lifecycle Rule automates transitioning your object to different tiers of storage
-- You can use it to permanently delete your objects as well
-- Can be used in conjunction with versioning
-- Can be applied to current versions and previous versions
+- Lifecycle Management and Glacier integration
 
-### Cross Region Replication
-- Cross Region Replication requires versioning enabled on the source and destination buckets
-- If you put a delete marker in your original bucket it is not going to replicate that market
-- If you delete your latest version it is not going to replicate "delete" in cross region bucket
-- Regions must be unique
-- Files in an existing bucket are not replicated automatically
-- All subsequent updates files will be replicated
-- Delete markers are not replicated
-- Deleting individual versions will not be replicated
-
-### Transfer Acceleration
-- S3 Transfer Acceleration utilizes the CloudFront Edge Network to accelerate your uploads to S3. Instead of uploading directly to your S3 bucket you can use a distinct URL to upload directly to an edge location which will then transfer that file to S3. 
-- You will get a distinct URL to upload.
-
-### CloudFront (Global)
-- A Content Delivery Network (CDN) is a system of distributed servers (network) that delivers webpages and other web content to a user based on the geographical locations of the user, the origin of the webpage and the content deliver server.
-**Key Terminology:**
-- Edge Location: Location where content will be cached. This is separate to a Region/AZ (Availability Zone)
-- Origin: The origin of all the files that the CDN will distribute. This can be an S3 Bucket, an EC2 instance, an Elastic Load Balancer, or Route 53. CloudFront can be used to deliver your entire website including dynamic/static,  streaming and interactive content - using a global network of edge locations. Requests for your content are automatically routed to the nearest edge location, so content is delivered with the best possible performance.
-
-- Two Types of CloudFront Distributions:
-  - 1: Web Distribution: Used for websites
-  - 2: RTMP: Used for media streaming
-- Edge Locations are not just READ only, you can write to them too. (e.g put objects to them)
-- Objects are cached for the Time of the TTL (Time To Live)
-- You can clear/invalidate cached objects, but you will be charged
-- CloudFront has 2 distributions: Web and RTMP
-- Invalidation: no longer available on the edge locations
-(First you have to disable CloudFront distribution the you can delete it)
-
-### Storage Gateway:
-Storage Gateway is a service that connects an on-premise softwaer appliance with cloud-based storage to provide seamless and secure integration between an organization's on premises IT environment and AWS' storage infrastructure. The service enables you to securely store data to the AWS Cloud for scalable and cost effective storage.
-
-**Your Data Center -> Storage Gateway -> Replicate Data -> AWS**
-
-- AWS Storage Gateway's software appliance is available for download as a VM (virtual image) that you install on a host in your datacenter. Storage Gateway supports VMware ESX / Microsoft Hyper-V
-- Once the gateway is installed and associated with your AWS account through the activation process, you can use the AWS Management Console to create the storage gateway options.
-
-Storage Gateways:
-  - 1: File Gateway (NPS)
-  - 2: Volume Gateway (iSCSI)
-    - stored volumes, cached volumes
-  - 3: Tape Gateway (VTL)
-
-* * *
 
 ## Part 3
 
@@ -473,11 +342,11 @@ EC2 has changed the economics of cloud computing by allowing you to pay only for
 
 **_Use Cases_**
 
-- Perfect for users that want the low cost and flexibility of EC2 without any of the up front payment or long term commitment
-- Applications with short term, spiky or unpredictable workloads that cannot be interrupted
-- Applications being developed or tested on EC2 for the first time
+- Perfect for users that want the low cost and flexibility of EC2 without any of the up front payment or long term commitment.
+- Applications that cannot be interrupted.
+- Applications being developed or tested on EC2 for the first time.
 
-#### Reserved
+#### Reserved Instances (RI)
 
 Provides you with a capacity reservation, and offer a significant discount on the hourly charge for an instance. 1 year or 3 year terms.
 
@@ -496,14 +365,13 @@ Enables you to bid whatever price you want for an instance capacity, providing f
 
 **Use Cases**
 
-- Applications that have flexible start and end times
+- Applications that have flexible start and end times.
 - Applications that are only feasible at very low compute prices
-- Used for single compute instances to save on costs compared to 9-5 during the week.
-- Users with an urgent need for a large amount of additional computing capacity.
+- Used for single compute instances to save on costs.
 
 #### Dedicated Hosts
 
-Physical EC2 server dedicated for your use. Dedicated Hosts can help you reduce costs by allowing you to use your existing server-bound software licenses.
+[Physical EC2 server](https://aws.amazon.com/ec2/dedicated-hosts/) dedicated for your use. Physical CPUs, Physical Memory, ..., just like your laptop. Dedicated Hosts can help you reduce costs by allowing you to use your existing server-bound software licenses (I.e. licenses where you pay per CPU). Dedicated Hosts also help you stay compliant to corporate regulations.
 
 **Use Cases**
 
@@ -513,6 +381,8 @@ Physical EC2 server dedicated for your use. Dedicated Hosts can help you reduce 
 - Can be purchased as a Reservation for up to 70% off the On-Demand price.
 
 ### EC2 Instance Types
+
+*You won't need to know these by heart.*
 
 | Family | Specialty                     | Use Cases                       |
 | :------:|:-----------------------------:| :------------------------------:|
@@ -590,34 +460,63 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
     - The computer you are working on can be almost anything and could be running Windows, Mac OSX, or Linux. 
  - The computer that we configure and rent from Amazon will be a Linux machine (though there are many other possibilities). - - You will use the terminal application on your computer to remotely log into this computer. 
  - The Amazon AWS computer you rent will be physically located somewhere that is likely far away from you. 
- - Depending on the `Region` you select in Amazon AWS it could be physically located in one of several large compute warehouses in the North America, South America, Europe or Asia.   
+ - Depending on the `Region` you select in Amazon AWS it could be physically located in one of several large compute warehouses in the North America, South America, Europe or Asia. **Make sure that you use the Ireland Region in this class.** 
 
 ***
 **Google Data Center, The Dalles, Oregon ([source](http://en.wikipedia.org/wiki/File:Google_Data_Center,_The_Dalles.jpg)):**
 ![Image of a data center](Images/AWS/DataCenter.jpg)
 
-- Since we are going to create an Amazon instance that is running a Linux operating system you will need to learn the basics of working at a Linux command line. You will also need to become familiar with basic fundamentals of Linux system administration.
- 
+- Since we are going to create an Amazon instance that is running a Linux operating system you will need to use your knowledge of working at a Linux command line. For reference, look up your notes from the Different Shapes of Data class. 
+
 ### Creating an account
+**(You do not need to create an account for this course, but this is how you would do it:)**
 - In order to use AWS for the first time, you will need to create an account. 
 - In order to create and run instances as described, you will need to associate a credit card with that account for billing purposes. Refer to the sections below on how billing works, how to estimate costs, and how to ensure that you have properly shut down everything that you could be billed for. 
-
-* * *
-**To run this tutorial as it is described should cost at most a few dollars.**
-* * *
-
-### Logging into the AWS console
 - To log into AWS, go to [aws.amazon.com](http://aws.amazon.com/) and hit the [Sign In to the Console](https://console.aws.amazon.com/console/home) button as shown below. 
 - If needed, create an account and activate it by associating a credit card. 
+
+### Logging into the AWS console
+
+**How we are going to do this:**
+- Please follow this URL: https://ceu.signin.aws.amazon.com/console . This is the login page of CEU's official AWS account.
+- Username: First part of your CEU email address (e.g example@ceu.edu -> `example` == username)
+- Password: TBA
 - Once you are logged in, select `EC2` from the list of Amazon Web Services. This tutorial is entirely focused on `EC2` (with some mention of `S3`) so the `EC2` console will be the starting point for many of the activities described below.
 
-***
-**AWS home:**
-![AWS-Home](Images/AWS/AWS-Home.png)
-***
+* * *
+
 **AWS log in:**
-![AWS-Login](Images/AWS/AWS-Login.png)
-***
+
+![AWS-Login](Images/AWS/console-login.png)
+
+* * *
+* * *
+**Before launching and using an EC2 instance please make sure to create a Security Group by following the steps described here:**
+
+**STEP 1:** After logging in: Go to `Services` -> `EC2` -> `Security Groups`
+![AWS-Security-Group](Images/AWS/security-group-aws.png)
+
+**STEP 2:** Click `Create Security Group`
+*Note: When you create an `Inbound rule` and `Outbound rule` is created automatically, so you can leave that empty. Security Groups are stateful. So if you allow HTTP in, it is automatically allowed out as well.*
+- Set up an HTTP and an SSH protocols:
+![AWS-Security-Group](Images/AWS/sec-rules.png)
+
+After creation, you will see two HTTP rules and two SSH rules;
+- `HTTP 0.0.0.0/0`  -> IPv4
+- `HTTP ::/0` -> IPv6
+- `SSH 0.0.0.0/0` -> IPv4
+- `SSH ::/0` -> IPv6
+
+If you make a change to a Security Group - that change takes effect immediately. In this class you will need to open port 8787 TCP to the world to get SSH access to your instances. 
+- You can attach more than one Security Group to an EC2 instance.
+
+Now create your EC2 instance and later attach this Security Group to it by clicking on `Instances` -> `Select your EC2 Instance` -> `Actions` -> `Networking` -> `Change Security Groups` -> Then select this Security Group and assign it to your EC2 instance.
+
+![AWS-Security-Group](Images/AWS/sg-assign-aws.png)
+
+
+* * *
+
 **List of AWS services (select EC2 for this tutorial):**
 ![AWS-Services](Images/AWS/AWS-Services.png)
 ***
@@ -656,7 +555,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
     - Even if you do not use it much. 
     - Even if you do not log into it at all! 
     - You have reserved it, it is being run for you, that resource can not be rented to someone else, so you must pay for it. 
-- To get a sense of how much a particular resource costs, spend some time examining the [AWS EC2 Pricing](http://aws.amazon.com/ec2/pricing/) list. 
+- To get a sense of how much a particular resource costs, spend some time examining the [AWS EC2 Pricing](https://aws.amazon.com/ec2/pricing/) list. Here is an even better site for checking EC2 prices: https://ec2instances.info/ 
 - Remember that `Region` can influence cost, so once you decide on the type of resources you need you should compare the cost of that resource across multiple regions. 
 - The pricing list is an extremely long page, broken down into several major categories: 
 - `Free Tier` (light weight resources you can experiment with for free) 
@@ -671,8 +570,8 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 - Amazon provides a [Monthly Calculator](http://calculator.s3.amazonaws.com/index.html) to help you predict what your costs might look like.
 
 - In this explanatory section, we are going to use an `On-Demand Instance`. 
-    - Let look more closely at that section of the [pricing list](http://aws.amazon.com/ec2/pricing/) by referring to the example screenshot below. 
-    - Note that we have selected `US West (Oregon)` as our region and we are looking at the `General Purpose` section of the table and assuming that we will launch a `Linux` instance. 
+    - Let look more closely at that section of the [pricing list](https://ec2instances.info/) by referring to the example screenshot below. 
+    - Note that we have selected `US West (Oregon)` for now as an example as our region and we are looking at the `General Purpose` section of the table and assuming that we will launch a `Linux` instance. 
     - These tables enumerate the features of various computer configurations that you can rent by the hour. 
     - Consider a particular instance type in this table, for example `m3.xlarge`.  
     - For this instance, we are told the number of CPUs that will be available on the machine (4), the amount of memory (15 GiB), the storage that will be pre-configured (2 x 80GB SSD drives), and the cost per hour to rent this machine ($0.140 per Hour).  
@@ -721,7 +620,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
   - The good news is that small EBS volumes are very cheap and by default the root volume for most instances is small (usually 8GB).
 
 - If you choose an instance type with pre-configured storage or you attach EBS volumes for storage but set them to be deleted upon termination of the instance, and you never create any `Snapshots` or save the instance as an `AMI`, when you terminate that instance, all costs associated with it will be gone. 
-- The cost will therefore be the hourly rate from the [pricing list](http://aws.amazon.com/ec2/pricing/) multiplied by the number of hours it was running rounded up to closest whole hour.
+- The cost will therefore be the hourly rate from the [pricing list](https://ec2instances.info/) multiplied by the number of hours it was running rounded up to closest whole hour.
 
 - In the `Billing and Cost Management` section of the EC2 console you can create billing alerts that will warn you of ongoing costs. 
 - If you find that you are being charged a monthly fee but you are not intentionally using any resources, you should follow these steps. 
@@ -729,7 +628,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
   - Now, *for each AWS Region*, determine the following; Are there any?:
     - `Running Instances`? 
     - `Volumes`? `
-    - 'Elastic IPs`?
+    - `Elastic IPs`?
     - `Snapshots`?  
     - If any of these values are greater than 0, in *any one or more regions*, you are likely being billed monthly for resources that Amazon is reserving for you until told otherwise. 
     - If you terminate or delete all of these items, your monthly bill should return to $0.
@@ -743,11 +642,12 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 - Once it is running we will log into this server and perform some additional exercises and configuration. 
 - To get started press the blue `Launch Instance` button. 
 - Remember that you are launching this instance in a particular `Region`. 
-- In the following example we launched an instance in `US East (N. Virginia)`. (Pick the closest to your location)
+- In the following example we launched an instance in `EU West (Ireland)`. (Pick the closest to your location)
 
 ***
 **Launching an instance:**
-![AWS-EC2-LaunchInstance](Images/AWS/AWS-EC2-LaunchInstance.png)
+- **Please make sure to select `EU West (Ireland)`.**
+![AWS-EC2-LaunchInstance](Images/AWS/az-eu-west.png)
 ***
 
 ### Step 1. Choosing an AMI 
@@ -761,7 +661,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 - `My AMIs`
 - `AWS Marketplace`
 - `Community AMIs`
-- In the `Quick Start` list we will select an Ubuntu AMI as our starting point
+- We will select `Amazon Linux 2 AMI (HVM), SSD Volume Type ` AMI as our starting point
 - The `Quick Start` AMIs section is a relatively short list of basic systems that have been chosen by Amazon as common starting points
 - These have some degree of "official" support and testing on AWS
 - The `My AMIs` section contains AMIs that you have created youself, perhaps using a `Quick Start` or `Community AMI` as a starting point
@@ -773,44 +673,39 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 - Finally, the `Community AMI` section contains thousands of AMIs created by users around the world
 - These AMIs are specific to each `Region` so if someone tells you about an AMI they want to share, be sure to search for it in the correct region
 - If you create you own AMI and you want to share it with others, you can 'publish' it to the community
-- It will still appear in you `My AMIs` section, but it will also then appear and be searchable in the `Community AMI` section.
+- It will still appear in your `My AMIs` section, but it will also then appear and be searchable in the `Community AMI` section.
 
-- For this tutorial we will select the following AMI from the `Quick Start` list: `ami-9a562df2`
-- This number is a unique ID for the AMI
-- The full length description for this AMI is `Ubuntu Server 14.04 LTS (HVM), SSD Volume Type`
+- For this tutorial we will select the an AMI from the `My AMIs` list: 
+- The full length description for this AMI is `Ubuntu - CEU - SSH on 8787`
 - We are also told that the `Root device type` is `EBS` and the `Virtualization type` is `HVM`
-- `Ubuntu Server 14.04 LTS`, refers to the version of the Ubuntu OS
-- This version is also known as Ubuntu '[Trusty Tahr](http://en.wikipedia.org/wiki/List_of_Ubuntu_releases#Ubuntu_14.04_LTS_.28Trusty_Tahr.29)'
-- We are told that the `Root device type` of the AMI is `EBS`
 - We will discuss storage in more detail but this means that the AMI is configured so that the `root volume` of the operating system will be installed on an EBS volume
 - In practical terms, this means that information stored on the root volume, including the OS itself will persist if we stop the instance (i.e. the root volume is *not* ephemeral)
-- The term `HVM` refers to a type of virtualization technologythat will be used by the instance, the other common type being `PV`
-- A detailed discussion of virtualizition technology is outside of the scope of this tutorial but you can learn more details here: [Linux AMI virtualization types](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html) and [Ubuntu PV vs HVM](http://stackoverflow.com/questions/22130214/amazon-ec2-ubuntupv-or-ubuntuhvm). 
-- On balance, the `HVM` option is now perhaps recommended over the `PV` option. Once you are ready to proceed, press the blue `Select` button next to the Ubuntu Server description.
+- The term `HVM` refers to a type of virtualization technologythat will be used by the instance, the other common type being `PV`.
+- A detailed discussion of virtualizition technology is outside of the scope of this class but you can learn more details here: [Linux AMI virtualization types](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html)
+- Once you are ready to proceed, press the blue `Select` button
 
 ***
 **Step 1. Choose an Amazon Machine Image (AMI):**
-![AWS-EC2-ChooseAnAMI](Images/AWS/AWS-EC2-ChooseAnAMI.png)
+![AWS-EC2-ChooseAnAMI](Images/AWS/AMI-aws.png)
 ***
 
 ### Step 2. Choosing an Instance Type
 - Once an AMI is selected, the next step is to choose an instance type
-- In simple terms, in the previous step we decided on the operating system we want to run (Ubuntu v14.04), and now we need to chose the hardware that it will run on
+- In simple terms, in the previous step we decided on the operating system we want to run, and now we need to chose the hardware that it will run on
 - Refer to the following screenshot for this discussion
   - Note that in this example, we have selected `General purpose` in the drop down filter
-  - This leaves us 7 choices for hardware configuration. 
+  - Pick `t2.nano` Instance Type
   - Note that the price per hour for each of these options is not listed here
-    - To get the price, note the instance type name (e.g. `m3.large`) and refer back to the [EC2 pricing list](http://aws.amazon.com/ec2/pricing/)
-- At the time of writing, an `m3.large` instance in `US East (N. Virginia)` rented on an `On Demand` basis costs $0.140 per Hour
+    - To get the price, note the instance type name (e.g. t2.nano`) and refer back to the [EC2 pricing list](https://ec2instances.info/)
 - We discussed many of the details described in this table of instance types in the pricing discussion above
 - Briefly, we are given a series of options that differ in their number of CPUs, memory, pre-configured storage, network performance, etc.
 - To view more or less details you can adjust this table using the `Show/Hide Columns option`
-- In the example depicted below we have selected the `m3.large` option with 2 CPUs, 7.5 GiB of memory, a single 32GB SSD `Instance Storage` volume, and moderate network performance
+- In the example depicted below we have selected the `t2.nano` option 
 - Once you are ready, proceed to the next step by pressing the `Next: Configure Instance Details` button
 
 ***
 **Step 2. Choose an Instance Type:**
-![AWS-EC2-ChooseAnInstanceType](Images/AWS/AWS-EC2-ChooseAnInstanceType.png)
+![AWS-EC2-ChooseAnInstanceType](Images/AWS/ec2nano.png)
 ***
 
 ### Step 3. Configuring Instance Details
@@ -820,12 +715,12 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 - For the most part, leaving all of these options at their default value will be fine
 - Refer to the following screenshot while we discuss a few of these options briefly
 - Using the `Number of instances` option you could launch multiple instances of the same AMI with the same hardware configurations at the same time
-- However, in our example, only one instance will be launched
+- However, in our example, only `one` instance will be launched
 - You also have the option to attempt to negotiate a cheaper rental by using the [Request Spot Instances](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-spot-instances.html) option
-- The `Shutdown behavior` option determines what will happen if you shutdown the instance from within the AMI (e.g. by issuing a `sudo shutdown` command in ubuntu linux)
+- The `Shutdown behavior` option determines what will happen if you shutdown the instance from within the AMI (e.g. by issuing a `sudo shutdown` command in linux)
 - To prevent accidental termination of your instance, you may want to set this option to `Stop`
-- You can also help to prevent accidental termination of your instance by using the `Enable termination protection` option
-- These options can also adjusted later for any instance in the console
+- You can also help prevent accidental termination of your instance by using the `Enable termination protection` option
+- These options can also be adjusted later for any instance in the console
 - Once you are ready, proceed to the next step by pressing the `Next: Add Storage` button
 
 ***
@@ -836,24 +731,22 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 ### Step 4. Adding Storage
 - The next step is to configure the disk/storage that will be available in the instance
 - The starting point of this page depends on what instance type we selected in Step 2
-  - Remember that we selected an instance type with an EBS root volume (during AMI selection) and an additional 1 x 32 GB SSD drive
+  - Remember that we selected an instance type with an EBS root volume (during AMI selection) 
   - These two volumes are summarized in the `Add Storage` view
   - The first volume is 8 GiB.  This is the root volume where the operating system will exist
   - It is set to be deleted on termination of the instance but we could chose to keep it as well
-  - The second row of the table shows as `instance store 0`. This is the 32 GiB SSD drive (though confusingly, the size is not shown here)
-- Our two volumes are projected to be attached to the instance as `/dev/sda` and `/dev/sdb`. Sometimes this does not exactly match what we see inside the instance because device mapping behavior depends on the operating system
-- Since the second volume is an `Instance Store` device, it is akin to a drive physically attached to the computer we are renting
-- This should ensure high performance, but it is important to remember that such volumes are `ephemeral` and the contents will not persist if the instance is stopped or destroyed
-- To demonstrate the difference, lets use the `Add New Volume` button to add a third volume to our instance (see Step 4b screenshot below)
+  
+ **Do not do this**, however you could add more volumes here
+- We could add a second/third.. volume to our instance
 - Choose `EBS` as the `Type`, set the device to `/dev/sdc`, give it a size of 500 GiB, and set the volume type to `General Purpose (SSD)`
-- Now when we log into the instance we will expect to find three distinct storage volumes/devises. 
+- Now when we log into the instance we will expect to find two/three distinct storage volumes/devises. 
 
 ***
 **Step 4a. Add Storage:**
-![AWS-EC2-AddStorage1](Images/AWS/AWS-EC2-AddStorage1.png)
+![AWS-EC2-AddStorage1](Images/AWS/S3StorageRevised.png)
 ***
 
-**Step 4b. Add additional Storage:**
+**This is how you would add Additional Storage :**
 ![AWS-EC2-AddStorage2](Images/AWS/AWS-EC2-AddStorage2.png)
 ***
 
@@ -887,21 +780,21 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 ### Step 5. Tagging the Instance
 - As you start to have a large number of instances running or saved you may want to start assigning `Tags` to these instances to help track their usage and billing details
 - Try creating a `Tag` as a simple key/value pair
-- In the example below we created a `name` tag with a value of `AWS Tutorial`
 - Once you are ready, proceed to the next step by pressing the `Next: Configure Security Group` button
 
 ***
 **Step 5. Tag Instance:**
-![AWS-EC2-TagInstance](Images/AWS/AWS-EC2-TagInstance.png)
+![AWS-EC2-TagInstance](Images/AWS/ec2-tags.png)
 ***
 
-### Step 6. Configuring a Security Group:
+### Step 6. Configuring a Security Group
+**(Dont do this here, create a Security Group separately and attach that to this EC2 Instance as explained above.)**
 - A `Security Group` controls how services and users can access your instance once it is running
 - When you launch a new instance you can choose to configure a new Security Group and use it or select one that you created previously
 - You can also select a `default` security group
 - The purpose of Security Group settings is to determine what Inbound and Outbound network traffic will be allowed on the instance
 - Since Inbound traffic could be coming from anyone (including those with malicious intentions) it is highly recommended that most incoming traffic be blocked and only certain incoming services be allowed on an as needed basis
-- In the example below we created a Security Group called `AWS-Tutorial` that only allows incoming traffic of two types:
+- In the example below we created a Security Group called `CEU-Tutorial` that only allows incoming traffic of two types:
   - `SSH` (over port 22) 
   - `HTTP` (over port 80)
 - The first rule, will allow us to log into our instance remotely using the SSH protocol
@@ -914,7 +807,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 
 ***
 **Step 6. Configure Security Group:**
-![AWS-EC2-ConfigureSecurityGroup](Images/AWS/AWS-EC2-ConfigureSecurityGroup.png)
+![AWS-EC2-ConfigureSecurityGroup](Images/AWS/Security-Group-AWS.png)
 ***
 
 ### Step 7. Reviewing the Instance before Launch
@@ -925,7 +818,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 
 ***
 **Step 7. Review Instance Launch:**
-![AWS-EC2-ReviewInstanceLaunch](Images/AWS/AWS-EC2-ReviewInstanceLaunch.png)
+![AWS-EC2-ReviewInstanceLaunch](Images/AWS/Review-AWS.png)
 ***
 
 ### Step 8. Assigning a Key Pair
@@ -935,7 +828,7 @@ Amazon EBS allows you to create storage volumes and attach them Amazon EC2 insta
 - If this is your first instance you will have to `Create a new key pair`
 - In the example below we have chosen to create a new key pair called `AWS-Tutorial`
 - Once the name is chosen, press the `Download Key Pair` button
-- You will download a simple text file called `AWS-Tutorial.pem`
+- You will download a simple text file called `CEU-Tutorial.pem`
 - Store this file somewhere on your computer (e.g. your home directory) and remember the location
 - The contents of this file will contain an RSA key that should look something like this:
 
@@ -969,7 +862,7 @@ UHuvF5mCDdAHWirFUBSiebxOpEQnkZ9IPXUUCSC6IQvPFbdGN8G3WjoER6Lw121Q4rJxGA==
 
 ***
 **Step 8. Select an existing Key Pair or create a new Key Pair:**
-![AWS-EC2-CreateKeyPair](Images/AWS/AWS-EC2-CreateKeyPair.png)
+![AWS-EC2-CreateKeyPair](Images/AWS/keypair-aws.png)
 ***
 
 - To prepare for logging into our instance, lets create a directory on our own `local` computer (i.e. the one you are sitting at) and store the key file there
@@ -978,14 +871,14 @@ UHuvF5mCDdAHWirFUBSiebxOpEQnkZ9IPXUUCSC6IQvPFbdGN8G3WjoER6Lw121Q4rJxGA==
 - To create a directory and move the key file we downloaded into that directory we can down the following in a Mac Terminal session:
 
 ```bash
-mkdir ~/AWS-Tutorial
-mv ~/Downloads/AWS-Tutorial.pem ~/AWS-Tutorial
-cd ~/AWS-Tutorial
-chmod 400 AWS-Tutorial.pem 
+mkdir ~/CEU-Tutorial
+mv ~/Downloads/CEU-Tutorial.pem ~/CEU-Tutorial
+cd ~/CEU-Tutorial
+chmod 400 CEU-Tutorial.pem 
 ls
 ```
 
-- The `chmod 400 AWS-Tutorial.pem` command changes the permissions of your key file so that only you can read it
+- The `chmod 600 CEU-Tutorial.pem` command changes the permissions of your key file so that only you can read it
 - This is an important security setting
 - If you attempt to log into your instance using a key file with inappropriate permissions, the login command may fail
 - So you should always perform this command on any new key file (or copy of such a file) before attempting to use it to log into an instance
@@ -1016,140 +909,68 @@ ls
 - You can then perform various tasks using the `Actions` menu
 - You can also right click on a single instance to obtain a similar menu
 - Before logging into this instance lets take a momemt to examine various important sections of the EC2 console in particular the `EC2 Dashboard`, `Volumes`, `Security Groups`, and `Key Pairs`
-- In each of these views you should see new entities that correspond to the instance we just created
 
 ***
-**Step 10. EC2 Console view of a new Instance:**
+**Step 10. EXAMPLE! Console view of a new Instance (Please don't replicate this instance here)**
 ![AWS-EC2-Console](Images/AWS/AWS-EC2-Console.png)
 ***
 
-**The EC2 dashboard should now show a running Instance, Volumes, etc.:**
-![AWS-EC2-Dashboard2](Images/AWS/AWS-EC2-Dashboard2.png)
-***
+#### Check
+- The EC2 dashboard should now show a running Instance, Volumes, etc.
+- Review new Volumes
+- Review new Security Groups
+- Review new Key Pairs
 
-**Review new Volumes:**
-![AWS-EC2-Volumes](Images/AWS/AWS-EC2-Volumes.png)
-***
+* * *
 
-**Review new Security Groups:**
-![AWS-EC2-SecurityGroups](Images/AWS/AWS-EC2-SecurityGroups.png)
-***
+### Step 11. Connecting to your instance using SSH
 
-**Review new Key Pairs:**
-![AWS-EC2-KeyPairs](Images/AWS/AWS-EC2-KeyPairs.png)
-***
+>So you've started your instance but how do you get to it? If you're not familiar with ssh, it's the command that allows you to log into a computer remotely over the network. In the simplest possible terms, it allows you to use a computer that's not physically right in front of you. 
 
-### Step 11. Logging into an instance
 - We are finally ready to log into our instance
 - To do this, open a terminal session on your local computer (e.g. using `Mac Terminal` or `Windows Putty`)
-- Change directories to the location where you stored your key file `AWS-Tutorial.pem`
+- Change directories to the location where you stored your key file `CEU-Tutorial.pem`
+- Now do a `chmod 600 yourpemfilename.pem`, otherwise you won't be able to SSH due to bad permissions
 - Now at the same time, view your instance in the EC2 console
 - Make sure that the `Key pair name` for this instance matches the `.pem` key file
 - Also, get the `Public IP` value from the console and use it instead of the example one below. Note that you could use the `Public DNS` value instead if you want
 
-- Finally log in as follows:
+- Finally log in as follows (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AccessingInstancesLinux.html)
 ```bash
-cd ~/AWS-Tutorial
-chmod 400 AWS-Tutorial.pem
-ssh -i AWS-Tutorial.pem ubuntu@52.5.92.87
+cd ~/CEU-Tutorial
+chmod 400 CEU-Tutorial.pem
+ssh -i AmazonKey.pem ec2-user@XXXXX
+
+# Example:
+ssh -i /Desktop/nginxtest.pem ec2-user@ec2-3-248-227-104.eu-west-1.compute.amazonaws.com
 ```
 
-```In this example, we open a terminal command line session on our local computer. We moved to the location of my `.pem` key file. We then made sure the permissions of this file were set correctly using a `chmod` command. You only need to do this step once but there is no harm in doing it again. Then we executed an SSH command to remotely log into our AWS instance using the `Public IP` 52.5.92.87. Our SSH command included an option to use the `.pem` file to identify us as the owner of the instance. We logged into the instance as a user called `ubuntu` because that is a user that we know will be defined by default on all ubuntu systems. Once logged in you can create new users if you wish. If your login is successful, you should see something like that shown in the screenshot below.```
+If successful, you will see something like this: 
+```bash
 
+       __|  __|_  )
+       _|  (     /   Amazon Linux AMI
+      ___|\___|___|
 
-**Step 11. Log into Instance:**
+https://aws.amazon.com/amazon-linux-ami/...
+```
+
+```In this example, we open a terminal command line session on our local computer. We moved to the location of my `.pem` key file. We then made sure the permissions of this file were set correctly using a `chmod` command. You only need to do this step once but there is no harm in doing it again. Then we executed an SSH command to remotely log into our AWS instance using the `Public IP`. Our SSH command included an option to use the `.pem` file to identify us as the owner of the instance. We logged into the instance as a user called `name` as an example now that is a user that we know will be defined by default on all systems.```
+
+**Pitfall:** One thing to watch out for is the following: the ssh address is based on your IP address and if you start and stop your instance the IP can change, changing the address you ssh into along with it (again, the value in the field Public DNS). If you've re-started your instance and are having trouble sshing, check that your address is correct.
+
+### Step 12. Install NGINX
+- Now that we are in, let's set up NGINX 
+- Run `sudo apt update` to apply all updates to your os.
+- To install NGINX run: `sudo apt install nginx`
+- Now you will have an html folder so `cd /var/www/html` and list contencts: `ls`
+- You will see one `.html` file
+- Use your preferred text editor e.g Nano, Vim, Emacs and make some changes to the html file (e.g `nano`)
+- Now you will see the changes if you visit your website
+
+![NGINX](Images/AWS/nginx.png)
 
 * * *
-
-### Trouble-shooting and advanced topics
-
-### I cannot log into my EC2 instance, what might have gone wrong?
-If you tried the above and it did not work there are several possible explanations. 
-- First, check the `Instance State` of your instance in the EC2 console. Is it `running`? When you first start an instance it takes a few minutes to boot up. Similarly, if you reboot the instance for some reason, you will not be able to log into it until it comes back online. 
-- Second, are you in a terminal session in the directory where you stored your `.pem` key file? 
-- Third, is this the right key file? Each instance is associated with a single `Key Pair` and you must have the key file that was created when that `Key Pair` was created. If you delete a key file and later generate a new one, it will not work with instances that used an older `Key Pair` even if you name the file the same thing. 
-- Fourth, have you set the permissions for your `.pem` key file correctly. Do not forget to run `chmod 400 *.pem` on your key file. 
-- Fifth, did you remember to include the `-i key_file_name.pem` in your SSH command? 
-- Sixth, did you remember to specify what user you want to log into the system as? You must include the `ubuntu@` (or other valid user name) before the IP address to log into an Ubuntu system by SSH. 
-- Seventh, did you specify the correct IP address for the instance you want to log into. The value after `ubuntu@` must match the `Public DNS` or `Public IP` value that is shown in the AWS EC2 Console.  Note that there are also `private` versions of these two values. Only the `Public` version will work from your local computer.
-- Eighth, does the `Security Group` used for the instance allow Incoming SSH Access? Make sure your `Security Group` has an entry for type `SSH`, protocol `TCP`, port `22`, from source `Anywhere`. If you have to change the `Security Group` settings to allow access, you will have to reboot the instance before they take effect.  
-
-### How do storage volumes appear within a Linux instance on Amazon EC2?
-- Now that you are logged in, you can investigate how the storage options you choose when creating the instance manifest inside an AWS Ubuntu instance
-- First try using the command `df -h` to view existing storage devices that are mounted
-- If you created a system exactly as decsribed above, you should see two devices (`/dev/xvda1` of 7.8G mounted as `/`) and (`/dev/xvdb` of 30G mounted as `/mnt`)
-- These are the `EBS` root device volume and the ephemeral 30G `Instance Store` volume that come with the `m3.large` instance type we chose
-- Remember that we also added another `EBS` volume that was 500 GiB in size. Where is that device? 
-  - It is not currently mounted
-  - To view all devices the system knows about you can do something like this command: `ls /dev/` or `ls -1 /dev/ | grep xvd`
-  - You should now see three devices: `xvda`, `xvdb`, and `xvdc`
-    - Lets format and mount the device `xvdc` to a new directory `data` as follows:
-
-```bash
-lsblk
-cd /
-sudo mkdir data
-sudo mkfs -t ext4 /dev/xvdc
-sudo mount /dev/xvdc /data
-sudo chown -R ubuntu:ubuntu /data
-df -h
-lsblk
-```
-
-- NOTE: Refer to AWS docs [about using EBS Volumes](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-using-volumes.html) for more details.
-
-- Now the same `df -h` command we performed above should show a new volume `/dev/xvdc` mounted at `/data` of size 493G
-- Note that in order to make this new mount persist when we reboot the machine we will have to add a mount line like this to the `/etc/fstab` file (e.g. by `sudo vim /etc/fstab`):
-```
-/dev/xvdc /data  auto  defaults,nobootwait 0 2
-```
-
-### Taking stock of compute resources within an Ubuntu Linux instance
-- To examine other resources within the Ubuntu instance you should familiarize yourself with the command `top` (press `1` to show CPUs and `q` to exit)
-- You can also learn about the system by examining `cat /proc/meminfo`, `cat /proc/cpuinfo`, and `lsb_release -a`.  
-
-### Basic setup and administration of an Ubuntu Linux instance
-- To update your Ubuntu OS to use the latest security patches etc. you can do the following:
-```bash
-sudo apt-get update
-sudo apt-get upgrade
-sudo reboot
-```
-
-### Setting up an Apache web server
-- If you want to easily retrieve or share data created on your instance, one option is to start an Apache web service on the instance so that you can browse the contents of certain directories remotely in a web browser
-- Note that when launching the instance our security group was configured to allow http access via port 80 so that this would work.
-
-* Edit config to allow files to be served from outside /usr/share and /var/www
-```
-sudo vim /etc/apache2/apache2.conf
-```
-
-* Add the following content to apache2.conf
-```
-<Directory /home/ubuntu/>
-       Options Indexes FollowSymLinks
-       AllowOverride None
-       Require all granted
-</Directory>
-```
-
-* Edit vhost file
-```
-sudo vim /etc/apache2/sites-available/000-default.conf
-```
-
-* Change document root in 000-default.conf
-```
-DocumentRoot /home/ubuntu
-```
-
-* Restart apache
-```
-sudo service apache2 restart
-```
-
-- You should now be able to enter the `Public IP` or `Public DNS` in a web browser on your local computer and browse the contents of the `/home/ubuntu` directory on your AWS instance
 
 ### What is difference between the 'Start', 'Stop', 'Reboot', and 'Terminate' (Instance States)?
 - From the AWS EC2 console, you can change the state of each of your instances
@@ -1167,9 +988,9 @@ sudo service apache2 restart
 ### Tidying up and shutting down AWS resources
 - Once you are done with this tutorial you should terminate or delete all resources that were created to ensure you are not charged
 - Specifically you should remove: `Instances`, `Volumes` and `Snapshots`
-- You may also decide to remove other entities that were created for demonstration purposes including: `Tags`, `AMIs`, `Security Groups`, and `Key Pairs`
+- You may also decide to remove other entities that were created for demonstration purposes including: `Tags`, `AMIs`, `Security Groups` and `Key Pairs`
 - All of this can be done in the AWS EC2 console
-- hen you are done, the `EC2 Dashboard` should show `0` for all resource types except `Security Groups` where a single default security configuration will remain
+- When you are all done, the `EC2 Dashboard` should show `0` for all resource types except `Security Groups` where a single default security configuration will remain
 
 ### Further reading (Optional)
 - This is a basic introduction to AWS cloud computing that assumes all configuration of the instance will occur within the AWS EC2 console of your web browser and all configuration of the Ubuntu Linux system will occur by the user manually executing commands and perhaps saving the outcome as a cusom AMI
@@ -1204,6 +1025,7 @@ sudo service apache2 restart
 - Platform as a Service (PaaS)
 - Software as a Service (Software as a Service)
 
+More here: https://aws.amazon.com/types-of-cloud-computing/
 
 #### What is S3 and what does it mean?
 
@@ -1288,14 +1110,6 @@ New users have NO permissions when first created
 ** Answer
 You cannot use the Access Key ID and Secret Key to login in the console. You can use this to access AWS via the APIs and CLI however.
 
-#### What is S3?
-
-** Answer
-
-S3 provides developpers and IT teams with secure, durable, highly-scalable object storage. Amazon S3 is easy to use, with a simple web service 
-interface to store and retrieve any amount of data from anywhere on the web.
-
-
 #### Size of the files on S3?
 
 ** Answer
@@ -1306,18 +1120,6 @@ From 0 Bytes to 5 TB
 ** Answer
 - Read after Write consistency for PUTS of new Objects
 - Eventual Consistency for overwrite PUTS and DELETES (can take some time to propagate)
-
-#### S3 is object based. What do objects consist of?
-
-** Answer
-- key (This is the name of the object)
-- value (This is the data and is made up of a sequence of bytes)
-- version ID (very important for versioning)
-- metadata (data about data you are storing)
-- subresources:
-  - Access Control Lists
-  - Torrent (not an exam topic)
-
 
 #### What are the different Tiers/Classes of storage for S3?
 
@@ -1338,78 +1140,41 @@ charged a retrieval fee.
 
 ** Answer
 Charged for 
-- Storagex
+- Storage
 - Requests
 - Storage Management Pricing (the tags you use on your data, added on the metadat of your files)
 - Data Transfer Pricing (when you transfer data from one region to another)
 - Transfer Acceleration
 
-#### What is S3 Transfert Acceleration?
+#### More questions to review:
+ - How do Security Groups and EC2 Instances Relate?
+ - When to use Glacier, S3, EBS?
+ - You need a computer for 8 hours. You need 16GB or RAM and 2 vCPUs. Which type of an EC2 instance would you chose? What would be the price?  
 
-** Answer
-Amazon S3 Transfert Acceleration enables fast, easy, and secure transferts of files over long distances between your end users and an S3 bucket. 
+# Recap video
 
-Transfert Acceleration takes advantage of Amazon CloudFront's globally distributed edge locations. As the data arrives at an edge location, data 
-is routed to Amazon S3 over an optimized path.
-
-#### What are the server side encryption options for S3?
-
-** Answer
-- SSE with Amazon S3 Managed Keys (SSE-S3)
-- SSE with KMS (SSE-KMS)
-- SSE with Customer Provided Keys (SSE-C)
-
-
-#### What are the two options for controlling access to a S3 bucket?
-
-** Answer
-- Bucket ACL
-- Bucket Policies
-
-#### S3 Versioning characteristics?
-
-** Answer
-- Stores all versions of an object (including all writes and even if you delete an object)
-- Great backup tool
-- Once enabled, versioning cannot be disabled, only suspended
-- Integrates with Lifecycles rules
-- Versioning's MFA Delete capability, which uses multi-factor authentication, can be used to provide an additional layer of security.
-
-#### Cross replication on S3?
-
-** Answer
-- Versioning must be enabled on both the source and destination buckets
-- Regions must be unique
-- Files in an existing bucket are not replicated automatically. All subsequent updated files will be replicated automatically.
-- You cannot replicate to multiple buckets or use daisy chaining (at this time)
-- Delete markers are replicated
-- Deleting individual versions or delete markers will not be replicated
-
-#### Lifecycle Management in S3?
-
-** Answer
-- Can be used in conjunction with versioning
-- Can be applied to current versions and previous versions
-- Following actions can now be done:
-  - Transition to the Standard IA storage class
-  - Archive to Glacier Storage Class
-  - Permanently Delete
-
-#### What are the two types of encryption on S3?
-
-** Answer
-- In Transit: when you are sending data to your bucket
-  - SSL/TLS
-- At Rest 
-  - Server Side Encryption 
-    - S3 Managed Keys - SSE-S3 each bucket is encrypted with a unique key Amazon encrypt the key itself with a master key that is regularly rotated.
-      Amazon handles all the keys for you (AES 256)
-    - AWS Key Management Service, Managed Keys - SSE-KMS Similar to SSE-S3 with some additional benefits s.a. who is decrypting what and when + option to manage the keys yourself.
-    - Server Side Encryption with Customer Provided Keys - SSE-C where your manage your keys and AWS is responsible for the encryption and decryption.
-  - Client Side Encryption
-
+[Here is a youtube](https://youtu.be/6FfLocjBcNE
+) video that will help you go complete your homework. It has detailed info about how to SSH into an EC instance both from Windows, Mac and Linux.
 
 * * *
 
 #### Sourcers/Credits:
-To be completed
+https://d1.awsstatic.com/whitepapers/architecture/AWS_Well-Architected_Framework.pdf?did=wp_card&trk=wp_card
+https://d1.awsstatic.com/whitepapers/aws-overview.pdf?did=wp_card&trk=wp_card
+https://d1.awsstatic.com/whitepapers/aws_cloud_adoption_framework.pdf?did=wp_card&trk=wp_card
+https://cloudacademy.com/learning-paths/aws-fundamentals-1/
+https://acloud.guru/
+https://d1.awsstatic.com/whitepapers/aws_pricing_overview.pdf?did=wp_card&trk=wp_card
+https://d1.awsstatic.com/whitepapers/AWS_DevOps.pdf?did=wp_card&trk=wp_card
+https://d1.awsstatic.com/whitepapers/Security/AWS_Security_Best_Practices.pdf?did=wp_card&trk=wp_card
+https://d1.awsstatic.com/whitepapers/AWS%20Storage%20Services%20Whitepaper-v9.pdf?did=wp_card&trk=wp_card
+https://aws.amazon.com/getting-started/use-cases/?awsf.getting-started-use-case=use-case%23big-data-analytics&e=gs&p=gsrc_control&sc_ichannel=so&sc_icategory=abtest&sc_iname=awswt-7&sc_iurl=gsrc&sc_iversion=a-use-case-bd-analytics
+https://ec2instances.info/
+https://medium.com/@ashanpriyadarshana/aws-services-overview-8432cb578227
+https://www.businessnewsdaily.com/10772-aws-training-resources.html
+https://aws.amazon.com/solutions/case-studies/vodafone/
+https://aws.amazon.com/solutions/case-studies/siemens/
+https://aws.amazon.com/solutions/case-studies/atlassian/
+https://www.smallbusinesscomputing.com/biztools/the-pros-and-cons-of-cloud-computing.html
+https://www.lifewire.com/cloud-computing-explained-2373125
+https://www.linkedin.com/pulse/11-pros-cons-cloud-computing-everyone-should-know-umesh-singh/

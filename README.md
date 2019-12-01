@@ -1,13 +1,14 @@
-[Home](./README.md).
-[Internet](./internet.md).
+[Home](./README.md) | 
+[Internet](./internet.md) | 
+[AWS](./aws.md) | 
+[Serverless](./serverless.md) | 
+[Optional - Big Data History](./big_data_history.md) | 
+[Spark Overview](./apachespark.md) | 
+[Spark DataFrame API, SQL and Internals](spark-continued.md) |
 <!--
-[Cloud Computing](./cloud_computing.md).
-[Serverless](./serverless.md).
-[AWS](./aws.md).
 [Spark Overview](./spark_overview.md).
 [Spark DataFrame & SQL API](./sparkAPI.md).
 [Spark Internals](./spark_internals.md).
-[Advanced Optimizations in Spark](spark_optimizations.md).
 -->
 [Help/Resources](./resources.md).
 
